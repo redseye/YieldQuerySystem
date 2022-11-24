@@ -1,0 +1,163 @@
+﻿@{
+    ViewData["Title"] = "Yield Query System";
+    if (ViewData["Title"] != null)
+    {
+      
+
+    }
+}
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Import Data</title>
+    @*<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="~/css/site.css" />*@
+    <link rel="stylesheet" href="~/css/StyleSheet.css" />
+</head>
+<style>
+    .area {
+        background: rgb(213 213 213/0.2);
+        border-radius: 12px;
+        position: fixed;
+        inset: 72px 1200px 700px 300px;
+        display: flex;
+        /*align-content: stretch;*/
+        /*justify-content:space-evenly;*/
+        flex-direction: row;
+        align-items: baseline;
+        padding: 6px;
+        /*width: 80%*/
+    }
+
+    .area2 {
+        background: rgb(213 213 213/0.2);
+        border-radius: 12px;
+        position: fixed;
+        inset: 260px 1200px 500px 300px;
+        display: flex;
+        /*align-content: stretch;*/
+        /*justify-content:space-evenly;*/
+        flex-direction: row;
+        align-items: baseline;
+        padding: 6px;
+        /*width: 80%*/
+    }
+
+    .area3 {
+        background: rgb(213 213 213/0.2);
+        border-radius: 12px;
+        position: fixed;
+        inset: 462px 1200px 300px 300px;
+        display: flex;
+        /*align-content: stretch;*/
+        /*justify-content:space-evenly;*/
+        flex-direction: row;
+        align-items: baseline;
+        padding: 6px;
+        /*width: 80%*/
+    }
+</style>
+
+<div class="interface">
+
+
+
+    <div class="form-group col-sm">
+        <div class="area">
+            <form action="./UploadDailyRawData" enctype="multipart/form-data" method="post">
+            @*<form>*@
+                <b><p><label style="background-color: #00ff21; width: 240px; height: 30px; font-family: Calibri; font-size: 20px ">Daily Raw-Data</label></p></b>
+                @*<br></br>*@
+                <p><input type="file" id="RawDataFile" class="form-control" name="file" /></p>
+                @*<br></br>*@
+                <button type="button" id="RawDataUpdate" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="form-group col-sm">
+        <div class="area2">
+            <form action="./UploadCloseYieldByLotData" enctype="multipart/form-data" method="post">
+                @*<form>*@
+                <b><p><label style="background-color: #0094ff; width: 240px; height: 30px; font-family: Calibri; font-size: 20px ">Close Yield by Lot</label></p></b>
+                @*<br></br>*@
+                <p><input type="file" id="CloseYieldByLotData" class="form-control" name="file" /></p>
+                @*<br></br>*@
+                <button type="button" id="CloseYieldByLotDataUpdate" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="form-group col-sm">
+        <div class="area3">
+            <form action="./UploadCloseYieldDefectData" enctype="multipart/form-data" method="post">
+                @*<form>*@
+                <b><p><label style="background-color: #faf519; width: 240px; height: 30px; font-family: Calibri; font-size: 20px ">Close Yield by Defect</label></p></b>
+                @*<br></br>*@
+                <p><input type="file" id="CloseYieldDefectData" class="form-control" name="file" /></p>
+                @*<br></br>*@
+                <button type="button" id="CloseYieldDefectDataUpdate" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+    </div>
+
+
+
+
+
+</div>
+
+@section Scripts{
+    <script>
+
+        function uploaddata(obj, url)
+        {
+            var indexdata = obj.get(0).files[0];
+            var formdata = new FormData();
+            formdata.append("file", indexdata);
+            $.ajax({
+                url: url,
+                type: 'post',
+                //dataType: 'json',
+                data: formdata,
+                processData: false,
+                contentType: false,
+                success: function(data){
+                    alert("上傳成功");
+                },
+                error: function (data) {
+                    //ajax打出失敗要做的事
+                    alert("上傳失敗")
+                }
+            })
+        }
+
+
+        $(document).ready(function () {
+            $("#ImportData").addClass("active");
+
+            $("#RawDataUpdate").click(function ()
+            {
+                uploaddata($("#RawDataFile"), './UploadDailyRawData')
+                
+            })
+            $("#CloseYieldByLotDataUpdate").click(function () {
+                uploaddata($("#CloseYieldByLotData"), './UploadCloseYieldByLotData')
+
+            })
+            $("#CloseYieldDefectDataUpdate").click(function () {
+                uploaddata($("#CloseYieldDefectData"), './UploadCloseYieldDefectData')
+
+            })
+
+        });
+
+    </script>
+}
+
+
+
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
