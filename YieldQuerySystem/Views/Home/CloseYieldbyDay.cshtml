@@ -1,5 +1,7 @@
-﻿@{
-    ViewData["Title"] = "Yield Query System";
+﻿@using YieldQuerySystem.Models.ViewModel
+@model DailyYieldSearchViewModel
+@{
+    ViewData["Title"] = "Yield Summary";
     @*if (ViewData["Title"] != null)
         {
             <script>alert(ViewData["Massage"])</script>
@@ -7,164 +9,322 @@
         }*@
 }
 
-
-
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Yield Summary</title>
-    <link rel="stylesheet" href="~/css/StyleSheet.css" />
-</head>
-
-
-
 <div class="interface">
     <div class="intro">
         <partial name="_DailyYieldSearchBar" model="Model" />
-
-        @*@Html.PartialAsync("YieldSearchView")*@
-
+        <canvas id="ChartJS"></canvas>
         <table id=queryTable class="table table-bordered">
         </table>
     </div>
 </div>
+
 @section Scripts{
     <script>
         
-            $(document).ready(function () {
+        $(document).ready(function () {
 
-                var $table = $("#queryTable");
+            $("#SummaryYield").addClass("active");
+
+            $(".TDCust3Code").hide();
+
+            var $table = $("#queryTable");
+
+            var sumOverAllYield;
+            var myLineChart;
+            var MonthAry = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
             function checkTime() {
-                    var datedif = (new Date($("txtDateEnd").val()) - new Date($("txtDateStart").val())) / 1000 / 60 / 60 / 24;
-            if ($("#txtDateStart").val() == '' || $("txtDateEnd").val() == '') {
-                alert("請輸入時間區間");
-            return;
-                    }
-                    else if (datedif > 90) {
-                alert("請輸入時間區間在三個月(90天)內");
-            return false;
-                    }
-            return true;
+                var datedif = (new Date($("txtDateEnd").val()) - new Date($("txtDateStart").val())) / 1000 / 60 / 60 / 24;
+                if ($("#txtDateStart").val() == '' || $("txtDateEnd").val() == '') {
+                    alert("請輸入時間區間");
+                    return;
                 }
+                else if (datedif > 90) {
+                    alert("請輸入時間區間在三個月(90天)內");
+                    return false;
+                }
+
+                return true;
+            }
 
             function mmddformat(StartTime) {
                 StartTime = new Date(StartTime);
-            showmonth = StartTime.getMonth() + 1;
-            showday = StartTime.getDate();
-            if (showmonth.toString().length == 1) {
-                showmonth = "0" + showmonth;
-                    }
-            if (showday.toString().length == 1) {
-                showday = "0" + showday;
-                    }
-            arydate = showmonth + "/" + showday;
-            return arydate;
+                showmonth = StartTime.getMonth() + 1;
+                showday = StartTime.getDate();
+                if (showmonth.toString().length == 1) {
+                    showmonth = "0" + showmonth;
+                }
+                if (showday.toString().length == 1) {
+                    showday = "0" + showday;
+                }
+                arydate = showmonth + "/" + showday;
+                return arydate;
+            }
+
+            function WeekFromYear(DateT)
+            {
+                var dateYear = DateT.getFullYear();
+                var dateMonth = DateT.getMonth() + 1;
+                var dateDay = DateT.getDate();
+                var dayMS =24*60*60*1000;
+                var date1=new Date(dateYear, 0, 1);
+                var firstDay = (7 - date1.getDay()) * dayMS;
+                var weekMS = 7*dayMS;
+                date1 = date1.getTime();
+                DateT = DateT.getTime();
+                return Math.ceil( (DateT-date1-firstDay)/weekMS )+1;
+            }
+
+            function gettableheadstring(StartTime,EndTime) {
+
+                appendstring = '<th scope="col">StageCode</th>' + '<th scope="col">LossCode</th>' + '<th scope="col">Date</th>';
+                var count=0;
+                var Yearflag=0;
+                StartTime = new Date(StartTime);
+                EndTime = new Date(EndTime);
+
+                if (StartTime.getFullYear() == EndTime.getFullYear())
+                {
+                    appendstring += '<th scope="col">Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
+                }
+                else
+                {
+                    appendstring += '<th scope="col">Y' + StartTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col">Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
                 }
 
-            
+                for (var setmonth = 3; setmonth >= 0; setmonth--) {
+                    count=0;
+                    count = EndTime.getMonth() - setmonth;
+                    Yearflag=EndTime.getFullYear();
+                    if (count<0)
+                    {
+                        count+=12;
+                        Yearflag -=1;
+                    }
+                    appendstring += '<th scope="col">' + MonthAry[count] + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                }
+
+                for (var setWeek = 3; setWeek >= 0; setWeek--) {
+                    count = 0;
+                    LastWeek = WeekFromYear(new Date((EndTime.getFullYear() - 1),11,31));
+                    count = WeekFromYear(EndTime) - setWeek;
+                    Yearflag = EndTime.getFullYear();
+                    if (count < 0) {
+                        count += LastWeek;
+                        Yearflag -= 1;
+                    }
+                    count+=1;
+                    appendstring += '<th scope="col">W' + count + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                }
+
+                for (var setDay = 7; setDay >= 0; setDay--) {
+                    var dateTime =new Date();
+                    dateTime=new Date( dateTime.setDate(EndTime.getDate()-setDay));
+                    appendstring += '<th scope="col">' + mmddformat(dateTime) + '</th>';
+                }
+
+
+                
+
+                //data.YearLotView.forEach(function(item)
+                //{
+                //    appendstring += '<th scope="col">Y' + item.ShowDate + '</th>';
+                //})
+                //data.MonthLotView.forEach(function(item)
+                //{
+                //    appendstring += '<th scope="col">' + item.ShowDate + '\'' + item.YearCode + '</th>';
+                //})
+                //data.WeeklyLotView.forEach(function(item)
+                //{
+                //    appendstring += '<th scope="col">W' + item.ShowDate + '\'' + item.YearCode + '</th>';
+                //})
+                //data.DayLotView.forEach(function(item)
+                //{
+                //    appendstring += '<th scope="col">' + mmddformat(item.CloseDT) + '</th>';
+                //})
+
+                return appendstring;
+            }
+
+            function gettablestring(data) {
+
+                appendstring = '<tr>';
+                appendstring += '<td></td>' + '<td></td>' + '<td>Schedule</td>';
+
+                data.forEach(function (item) {
+                    appendstring += '<td>' + item.LotNo + '</td>'
+                });
+
+                appendstring += '</tr>'
+                appendstring += "<tr>";
+                appendstring += '<td></td>' + '<td></td>' + "<td>Assy Input qty</td>"
+
+                data.forEach(function (item) {
+                    appendstring += '<td>' + item.QtyIssue + '</td>'
+                });
+                appendstring += "</tr>";
+                appendstring += "<tr>";
+                appendstring += '<td></td>' + '<td></td>' + "<td>Assy Output qty</td>"
+
+                data.forEach(function (item) {
+                    appendstring += '<td>' + item.QtyOut + '</td>'
+                });
+                appendstring += "</tr>";
+                appendstring += "<tr>";
+                appendstring += '<td></td>' + '<td></td>' + "<td>Assy Yield</td>"
+
+                data.forEach(function (item) {
+                    appendstring += '<td>' + item.OverAllYield + "%" + '</td>'
+                });
+                appendstring += "</tr>";
+                appendstring += "<tr>";
+                appendstring += '<td></td>' + '<td></td>' + "<td>Loss Qty</td>"
+
+                data.forEach(function (item) {
+                    appendstring += '<td>' + item.LossQty + '</td>'
+                });
+                appendstring += "</tr>";
+
+                return appendstring;
+            }
+
+            function ErrorCodeTableString(data) {
+                appendstring = '';
+                data.LossDataView.forEach(function (item) {
+                    appendstring += '<tr>'
+                    appendstring += '<td>' + item.StageCode + '</td>' + '<td>' + item.LossCode + '</td>' + '<td>' + item.LossDesc + '</td>';
+
+                    data.LotView.forEach(function (ViewLotNo) {
+                        var flag = false;
+                        item.LD.forEach(function (LDItem) {
+                            if (LDItem.LotNo == ViewLotNo.LotNo) {
+                                appendstring += '<td>' + LDItem.UniLossQty + '</td>';
+                                flag = true;
+                            }
+                        });
+                        if (!flag) {
+                            appendstring += '<td>' + '0' + '</td>';
+                        }
+                    });
+
+                    appendstring += '</tr>'
+                });
+                return appendstring;
+            }
+
+            function DrawLineChart(data) {
+                const ctx = $("#ChartJS");
+
+                if (myLineChart) {
+                    myLineChart.destroy();
+                }
+                var chartLabels = ['Cum'];
+                var chartOverAllYield = [sumOverAllYield];
+                data.forEach(function (item) {
+                    chartLabels.push(item.LotNo);
+                    chartOverAllYield.push(item.OverAllYield)
+                });
+                myLineChart = new Chart(ctx, {
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            type: 'line',
+                            data: chartOverAllYield,
+                        }]
+                    },
+                    options: {
+                        scales:
+                        {
+                            y:
+                            {
+                                beginAtZero: true,
+                                ticks: {
+                                    min: 0,
+                                    max: 100,
+                                    callback: function (value) {
+                                        return value + "%"
+                                    }
+                                },
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: "Percentage"
+                                }
+                            },
+                        },
+                        plugins: {
+                            legend:
+                            {
+                                display: false
+                            }
+                        }
+
+                    }
+                }
+                )
+            }
+
             $("#YieldTable").hide();
 
             $("#buttonQuery").click(function () {
 
-                    if (!checkTime()) {
-                        return;
-                    }
+                if (!checkTime()) {
+                    return;
+                }
 
-            var QueryCondition =
-            {
-                Plant: $("#Plant").val(),
-            Cust2Code: $("#Cust2Code").val(),
-            Cust3Code: $("#Cust3Code").val(),
-            PKGCode: $("#PkgCode").val(),
-            StageCode: $("#StageCode").val(),
-            DeviceName: $("#txtDeviceName").val(),
-            StartTime: $("#txtDateStart").val(),
-            EndTime: $("#txtDateEnd").val(),
-                    }
+                var QueryCondition =
+                {
+                    Plant: $("#Plant").val(),
+                    Cust2Code: $("#Cust2Code").val(),
+                    PKGCode: $("#txtPKGCode").val(),
+                    StageCode: $("#StageCode").val(),
+                    DeviceName: $("#txtDeviceName").val(),
+                    StartTime: $("#txtDateStart").val(),
+                    EndTime: $("#txtDateEnd").val(),
+                }
 
-            $.ajax({
-                url: '../YieldQuery/QueryDailyYieldDefectData',
-            type: 'post',
-            dataType: 'json',
-            data: QueryCondition,
-            contentsType: 'acclication/json',
-            success: function (data) {
+                $.ajax({
+                    url: '../CloseYieldQuery/QueryCloseYieldSummary',
+                    type: 'post',
+                    dataType: 'json',
+                    data: QueryCondition,
+                    contentsType: 'acclication/json',
+                    success: function (data) {
+                        //ajax 打出成功要做的事
+                        $("#queryTable > thead").remove();
+                        $("#queryTable > tbody").remove();
 
-                $("#queryTable > thead").remove();
-                            $("#queryTable > tbody").remove();
+                        var appendstring = gettableheadstring(QueryCondition.StartTime,QueryCondition.EndTime);
+                        
+                        $table.append('<thead>').children("thead")
+                            .append('<tr>').children('tr')
+                            .append(appendstring);
 
-            var appendstring = "";
+                        //add tbody
+                        var $tbody = $table.append('<tbody />').children('tbody');
+                        //add row
+                        appendstring = gettablestring(data);
 
-            data.ShowTitle.forEach(function (item) {
-                                if (!(item === 'DefectName' || item === 'DefectQty' || item === 'Defects'))
-            appendstring += '<th scope="col">' + item + '</th>';
-                            });
-            //add thead
-            $table.append('<thead>').children("thead")
-                .append('<tr>').children('tr')
-                    .append(appendstring);
+                        $tbody.append(appendstring);
 
-                    //add tbody
-                    var $tbody = $table.append('<tbody />').children('tbody');
-                    //add row
+                        appendstring = ErrorCodeTableString(data);
 
-                    data.ShowDefectData.forEach(function (item) {
-                        appendstring = "";
-                    appendstring += '<tr>';
-                        data.ShowTitle.forEach(function (titleitem) {
-                                    if (titleitem === 'TrackInTime' || titleitem === 'TrackOutTime') {
-                            appendstring += '<td>' + mmddformat(item[titleitem]) + '</td>';
-                                    }
-                        else if ($.inArray(titleitem, data.DefectCode) != -1) {
-                                        if (item.Defects.length>0)
-                        {
-                                            var FindFlag=false;
-                        item.Defects.forEach(function (DefectCode) {
-                                                if (DefectCode.DefectName === titleitem) {
-                            appendstring += '<td>' + DefectCode.DefectQty + '</td>';
-                        FindFlag=true;
-                                                }
-                                            });
-                        if (!FindFlag)
-                        {
-                            appendstring += '<td>' + '' + '</td>';
-                                            }
-                                        }
-                        else
-                        {
-                            appendstring += '<td>' + '' + '</td>';
-                                        }
-                                    }
-                        else if (!(titleitem === 'DefectName' || titleitem === 'DefectQty' || titleitem === 'Defects')) {
-                            appendstring += '<td>' + item[titleitem] + '</td>';
-                                    }
-                        else
-                        {
-                        }
+                        $tbody.append(appendstring);
 
-                                });
-                        appendstring += '</tr>';
-                    $tbody.append(appendstring);
-                            });
+                        DrawLineChart(data.LotView);
 
-                        },
+                    },
                     error: function (data) {
                         //ajax 打出失敗要做的事
                         alert("查詢失敗，請稍後查詢。")
                     }
-                    });
                 });
             });
-    
-
-        $(document).ready(function () {
-            $("#SummaryYield").addClass("active");
         });
     </script>
 }
 
-
 <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 

@@ -72,5 +72,6 @@
     <Build Include="dbo\Tables\CloseYieldDetail.sql" />
     <Build Include="dbo\Tables\CloseYield.sql" />
     <Build Include="dbo\Stored Procedures\SP_CloseYieldByLotData.sql" />
+    <Build Include="dbo\Stored Procedures\SP_CloseYieldByLotLossData.sql" />
   </ItemGroup>
 </Project>

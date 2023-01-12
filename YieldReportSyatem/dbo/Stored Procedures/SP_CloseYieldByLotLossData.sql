@@ -1,9 +1,9 @@
 ﻿-- =============================================
 -- Author:		<George Lin>
--- Create date: <2022/11/24>
--- Description:	<CloseYieldByLotData>
+-- Create date: <2022/12/07>
+-- Description:	<SP_CloseYieldByLotLossData>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_CloseYieldByLotData]
+CREATE PROCEDURE [dbo].[SP_CloseYieldByLotLossData]
 	-- Add the parameters for the stored procedure here
 	(
 	@Plant varchar(5),
@@ -38,13 +38,11 @@ where ( ( (@StartYearCode != '' or @EndYearCode != '') and (subcy.YearCode= @Sta
 	and (subcy.Device = @DeviceName or @DeviceName is null)
 order by subcy.CloseDT 
 
-select * from #temp
 
-select #temp.LotNo,#temp.YearCode,#temp.LossQTY,cyd.LossCode,lc.LossDesc
+select #temp.LotNo,#temp.YearCode,#temp.LossQTY as LossQty,cyd.StageCode,cyd.LossCode,lc.LossDesc,cyd.LossQty as UniLossQty
 from #temp
 left join dbo.CloseYieldDetail as cyd on #temp.LotNo=cyd.LotNo and #temp.YearCode=cyd.YearCode
 left join dbo.LossCode as lc on cyd.LossCode = lc.LossCode
-
 
 drop table #temp
 

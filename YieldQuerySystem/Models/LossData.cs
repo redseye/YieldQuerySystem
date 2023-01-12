@@ -4,10 +4,9 @@
     {
         public string LossCode { get; set; }
         public string LossDesc { get; set; }
-        public int Qty { get; set; }
-        
-        
+        public int LossQTY { get; set; }
+        public string StageCode { get; set; }
 
-
+        
     }
 }

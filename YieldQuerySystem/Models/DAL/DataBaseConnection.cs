@@ -6,6 +6,7 @@ using Dapper;
 using System.Data.SqlClient;
 using System.Data;
 using Dapper.FluentColumnMapping;
+using Dapper;
 using YieldQuerySystem.Models.ViewModel;
 
 namespace YieldQuerySystem.Models.DAL
@@ -199,7 +200,6 @@ namespace YieldQuerySystem.Models.DAL
             List<CloseYieldByLotViewModel> vm = new List<CloseYieldByLotViewModel>();
             this._conn.Open();
             DynamicParameters parameters = new DynamicParameters();
-
             parameters.Add("@Plant", model.Plant, DbType.String, ParameterDirection.Input);
             parameters.Add("@Cust2Code", model.Cust2Code, DbType.String, ParameterDirection.Input);
             parameters.Add("@PKGCode", model.PKGCode, DbType.String, ParameterDirection.Input);
@@ -207,9 +207,32 @@ namespace YieldQuerySystem.Models.DAL
             parameters.Add("@DeviceName", model.DeviceName, DbType.String, ParameterDirection.Input);
             parameters.Add("@StartTime", model.StartTime, DbType.DateTime, ParameterDirection.Input);
             parameters.Add("@EndTime", model.EndTime, DbType.DateTime, ParameterDirection.Input);
+            parameters.Add("@StartYearCode", model.StartYearCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@EndYearCode", model.EndYearCode, DbType.String, ParameterDirection.Input);
 
             var result = this._conn.Query<CloseYieldByLotViewModel>("[dbo].[SP_CloseYieldByLotData]", parameters, commandType: CommandType.StoredProcedure);
             vm = result.ToList();
+            this._conn.Close();
+            return vm;
+        }
+        public List<VMLossData> QueryCloseYieldbyLotLossData(QueryDailyYield model)
+        {
+            List<VMLossData> vm = new List<VMLossData>();
+            this._conn.Open();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Plant", model.Plant, DbType.String, ParameterDirection.Input);
+            parameters.Add("@Cust2Code", model.Cust2Code, DbType.String, ParameterDirection.Input);
+            parameters.Add("@PKGCode", model.PKGCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@StageCode", model.StageCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@DeviceName", model.DeviceName, DbType.String, ParameterDirection.Input);
+            parameters.Add("@StartTime", model.StartTime, DbType.DateTime, ParameterDirection.Input);
+            parameters.Add("@EndTime", model.EndTime, DbType.DateTime, ParameterDirection.Input);
+            parameters.Add("@StartYearCode", model.StartYearCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@EndYearCode", model.EndYearCode, DbType.String, ParameterDirection.Input);
+
+            var result = this._conn.Query<VMLossData>("[dbo].[SP_CloseYieldByLotLossData]", parameters, commandType: CommandType.StoredProcedure);
+            vm = result.ToList();
+            this._conn.Close();
             return vm;
         }
 
