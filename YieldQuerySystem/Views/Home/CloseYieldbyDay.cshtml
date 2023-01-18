@@ -32,7 +32,10 @@
             var sumOverAllYield;
             var myLineChart;
             var MonthAry = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
+            var YearCount=[];
+            var MonthCount = [];
+            var WeekCount=[];
+            var dayCount=[];
             function checkTime() {
                 var datedif = (new Date($("txtDateEnd").val()) - new Date($("txtDateStart").val())) / 1000 / 60 / 60 / 24;
                 if ($("#txtDateStart").val() == '' || $("txtDateEnd").val() == '') {
@@ -75,7 +78,18 @@
                 return Math.ceil( (DateT-date1-firstDay)/weekMS )+1;
             }
 
-            function gettableheadstring(StartTime,EndTime) {
+            function initTable()
+            {
+                $("#queryTable > thead").remove();
+                $("#queryTable > tbody").remove();
+                YearCount.length=0;
+                MonthCount.length = 0;
+                WeekCount.length=0;
+                dayCount.length=0;
+            }
+
+            function gettableheadstring(StartTime,EndTime)
+            {
 
                 appendstring = '<th scope="col">StageCode</th>' + '<th scope="col">LossCode</th>' + '<th scope="col">Date</th>';
                 var count=0;
@@ -85,12 +99,15 @@
 
                 if (StartTime.getFullYear() == EndTime.getFullYear())
                 {
-                    appendstring += '<th scope="col">Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col" id="Y' + StartTime.getFullYear().toString().substr(2, 2) + '">Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    YearCount.push(StartTime.getFullYear().toString().substr(2, 2));
                 }
                 else
                 {
-                    appendstring += '<th scope="col">Y' + StartTime.getFullYear().toString().substr(2, 2) + '</th>';
-                    appendstring += '<th scope="col">Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col" id="Y' + StartTime.getFullYear().toString().substr(2, 2) + '" >Y' + StartTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col" id="Y' + EndTime.getFullYear().toString().substr(2, 2) + '" >Y' + EndTime.getFullYear().toString().substr(2, 2) + '</th>';
+                    YearCount.push(StartTime.getFullYear().toString().substr(2, 2));
+                    YearCount.push(EndTime.getFullYear().toString().substr(2, 2));
                 }
 
                 for (var setmonth = 3; setmonth >= 0; setmonth--) {
@@ -102,7 +119,8 @@
                         count+=12;
                         Yearflag -=1;
                     }
-                    appendstring += '<th scope="col">' + MonthAry[count] + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col" id="' + MonthAry[count] + '">' + MonthAry[count] + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                    MonthCount.push((MonthAry[count]+Yearflag.toString().substr(2, 2)));
                 }
 
                 for (var setWeek = 3; setWeek >= 0; setWeek--) {
@@ -115,34 +133,16 @@
                         Yearflag -= 1;
                     }
                     count+=1;
-                    appendstring += '<th scope="col">W' + count + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                    appendstring += '<th scope="col" id="W'+ count +'" >W' + count + '\'' + Yearflag.toString().substr(2, 2) + '</th>';
+                    WeekCount.push(count + Yearflag.toString().substr(2, 2));
                 }
 
                 for (var setDay = 7; setDay >= 0; setDay--) {
-                    var dateTime =new Date();
+                    var dateTime =new Date(EndTime);
                     dateTime=new Date( dateTime.setDate(EndTime.getDate()-setDay));
-                    appendstring += '<th scope="col">' + mmddformat(dateTime) + '</th>';
+                    appendstring += '<th scope="col" id="D'+ setDay  +'">' + mmddformat(dateTime) + '</th>';
+                    dayCount.push(mmddformat(dateTime) + Yearflag.toString().substr(2, 2));
                 }
-
-
-                
-
-                //data.YearLotView.forEach(function(item)
-                //{
-                //    appendstring += '<th scope="col">Y' + item.ShowDate + '</th>';
-                //})
-                //data.MonthLotView.forEach(function(item)
-                //{
-                //    appendstring += '<th scope="col">' + item.ShowDate + '\'' + item.YearCode + '</th>';
-                //})
-                //data.WeeklyLotView.forEach(function(item)
-                //{
-                //    appendstring += '<th scope="col">W' + item.ShowDate + '\'' + item.YearCode + '</th>';
-                //})
-                //data.DayLotView.forEach(function(item)
-                //{
-                //    appendstring += '<th scope="col">' + mmddformat(item.CloseDT) + '</th>';
-                //})
 
                 return appendstring;
             }
@@ -150,40 +150,93 @@
             function gettablestring(data) {
 
                 appendstring = '<tr>';
-                appendstring += '<td></td>' + '<td></td>' + '<td>Schedule</td>';
-
-                data.forEach(function (item) {
-                    appendstring += '<td>' + item.LotNo + '</td>'
-                });
-
+   
                 appendstring += '</tr>'
                 appendstring += "<tr>";
                 appendstring += '<td></td>' + '<td></td>' + "<td>Assy Input qty</td>"
 
-                data.forEach(function (item) {
-                    appendstring += '<td>' + item.QtyIssue + '</td>'
-                });
+                for (var i = 0; i < YearCount.length;i++)
+                {
+                    data.YearLotView.forEach(function (item) {
+                 
+                        if(item.YearCode==YearCount[i])
+                        {
+                          appendstring += '<td>' + item.QtyIssue + '</td>'
+                        }
+                        else
+                        {
+                          appendstring += '<td>' + " "+ '</td>'
+                        }
+                    });
+                }
+
+                for (var i = 0; i < MonthCount.length; i++) {
+                    var matchflag=false;
+                    data.MonthLotView.forEach(function (item){
+                        var str = item.ShowDate+item.YearCode;
+                        if (str == MonthCount[i]) {
+                            appendstring += '<td>' + item.QtyIssue + '</td>';
+                            matchflag=true;
+                        }
+                    });
+                    if(!matchflag)
+                    {
+                        appendstring += '<td>' + " " + '</td>';
+                    }
+
+                }
+                for (var i = 0; i < WeekCount.length; i++) {
+                    var matchflag = false;
+                    data.WeeklyLotView.forEach(function (item) {
+                        var str = item.ShowDate + item.YearCode;
+                        if (str == WeekCount[i]) {
+                            appendstring += '<td>' + item.QtyIssue + '</td>';
+                            matchflag = true;
+                        }
+                    });
+                    if (!matchflag) {
+                        appendstring += '<td>' + " " + '</td>';
+                    }
+                }
+
+                for (var i = 0; i < dayCount.length; i++) {
+                    var matchflag = false;
+                    data.DayLotView.forEach(function (item) {
+                        var str = item.ShowDate + item.YearCode;
+                        if (str == dayCount[i]) {
+                            appendstring += '<td>' + item.QtyIssue + '</td>';
+                            matchflag = true;
+                        }
+                    });
+                    if (!matchflag) {
+                        appendstring += '<td>' + " " + '</td>';
+                    }
+                }
+
                 appendstring += "</tr>";
                 appendstring += "<tr>";
                 appendstring += '<td></td>' + '<td></td>' + "<td>Assy Output qty</td>"
-
+                /*
                 data.forEach(function (item) {
                     appendstring += '<td>' + item.QtyOut + '</td>'
                 });
+                */
                 appendstring += "</tr>";
                 appendstring += "<tr>";
                 appendstring += '<td></td>' + '<td></td>' + "<td>Assy Yield</td>"
-
+                /*
                 data.forEach(function (item) {
                     appendstring += '<td>' + item.OverAllYield + "%" + '</td>'
                 });
+                */
                 appendstring += "</tr>";
                 appendstring += "<tr>";
                 appendstring += '<td></td>' + '<td></td>' + "<td>Loss Qty</td>"
-
+                /*
                 data.forEach(function (item) {
                     appendstring += '<td>' + item.LossQty + '</td>'
                 });
+                */
                 appendstring += "</tr>";
 
                 return appendstring;
@@ -291,8 +344,7 @@
                     contentsType: 'acclication/json',
                     success: function (data) {
                         //ajax 打出成功要做的事
-                        $("#queryTable > thead").remove();
-                        $("#queryTable > tbody").remove();
+                        initTable();
 
                         var appendstring = gettableheadstring(QueryCondition.StartTime,QueryCondition.EndTime);
                         
@@ -307,11 +359,11 @@
 
                         $tbody.append(appendstring);
 
-                        appendstring = ErrorCodeTableString(data);
+                        //appendstring = ErrorCodeTableString(data);
 
-                        $tbody.append(appendstring);
+                        //$tbody.append(appendstring);
 
-                        DrawLineChart(data.LotView);
+                        //DrawLineChart(data.LotView);
 
                     },
                     error: function (data) {

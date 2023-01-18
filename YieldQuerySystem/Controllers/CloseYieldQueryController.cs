@@ -118,13 +118,13 @@ namespace YieldQuerySystem.Controllers
                                              YearCode = x.FirstOrDefault().CloseDT.ToString().Substring(8, 2)
                                          }).ToList();
 
-            vm.DayLotView = LotView.GroupBy(x => new { CloseDT = x.CloseDT.Substring(0, 4) }).Select
+            vm.DayLotView = LotView.GroupBy(x => new { CloseDT = x.CloseDT.Substring(0, 5) }).Select
                                          (x => new CloseYieldByLotViewModel
                                          {
                                              LossQty = x.Sum(y => y.LossQty),
                                              QtyIssue = x.Sum(y => y.QtyIssue),
                                              QtyOut = x.Sum(y => y.QtyOut),
-                                             ShowDate = Convert.ToDateTime(x.FirstOrDefault().CloseDT).ToString("MMMM", new CultureInfo("en-us")).Substring(0, 3),
+                                             ShowDate = (x.FirstOrDefault().CloseDT).Substring(0,5),
                                              YearCode = x.FirstOrDefault().CloseDT.ToString().Substring(8, 2)
                                          }).ToList();
 
